@@ -36,7 +36,10 @@ hh_median_treatment <- (df %>% filter(treat_status == "yes"))$hh_size %>% median
 hh_median_control <- (df %>% filter(treat_status == "no"))$hh_size %>% median(na.rm = T)
 
 
-col_for_descrpt <- c("treat_status","q2_8_hoh_gender","hh_size","ppi_raw","q2_9_hh_status","q3_1a_land_rice","q3_1b_land_veg","q3_1c_land_fruit")
+col_for_descrpt <- c("treat_status","q2_8_hoh_gender",
+                     "hh_size","ppi_raw","q2_9_hh_status",
+                     "q3_1a_land_rice","q3_1b_land_veg",
+                     "q3_1c_land_fruit","q3_1d_land_other")
 
 
 
@@ -123,11 +126,12 @@ ggsave(path = "outputs/",filename =paste0("poverty_graph",".jpg") ,width=14,heig
 # land holding  -----------------------------------------------------------
 
 overall_land_holding <- descriptive_analysis_overall %>% select(starts_with("q3_")) %>% mutate(
-  total_area_of_holding_land = q3_1a_land_rice + q3_1b_land_veg +q3_1c_land_fruit,
+  total_area_of_holding_land = q3_1a_land_rice + q3_1b_land_veg +q3_1c_land_fruit+q3_1d_land_other,
   Rice = q3_1a_land_rice/total_area_of_holding_land*100,
   Vegetable = q3_1b_land_veg/total_area_of_holding_land*100,
-  Fruits = q3_1c_land_fruit/total_area_of_holding_land*100,
-) %>% select(Rice,Vegetable,Fruits)
+  Fruit = q3_1c_land_fruit/total_area_of_holding_land*100,
+  Other = q3_1d_land_other/total_area_of_holding_land*100
+) %>% select(Rice,Vegetable,Fruit,Other)
 
 overall_land_holding_pi_long <- overall_land_holding %>% 
   tidyr::pivot_longer(cols = names(overall_land_holding),values_to = "percentage",names_to = "product") %>% mutate(
@@ -136,11 +140,12 @@ overall_land_holding_pi_long <- overall_land_holding %>%
 
 
 treatment_land_holding <- descriptive_analysis_by_treatment %>% select(treat_status,contains("q3_"))  %>% mutate(
-  total_area_of_holding_land = q3_1a_land_rice + q3_1b_land_veg +q3_1c_land_fruit,
+  total_area_of_holding_land = q3_1a_land_rice + q3_1b_land_veg +q3_1c_land_fruit+q3_1d_land_other,
   Rice = q3_1a_land_rice/total_area_of_holding_land*100,
   Vegetable = q3_1b_land_veg/total_area_of_holding_land*100,
-  Fruits = q3_1c_land_fruit/total_area_of_holding_land*100,
-) %>% select(treat_status,Rice,Vegetable,Fruits)
+  Fruit = q3_1c_land_fruit/total_area_of_holding_land*100,
+  Other = q3_1d_land_other/total_area_of_holding_land*100
+) %>% select(treat_status,Rice,Vegetable,Fruit,Other)
 
 treatment_land_holding_pi_long <- treatment_land_holding %>% pivot_longer(cols = !treat_status,names_to = "product",values_to = "percentage")
 treatment_land_holding_pi_long$treat_status <- if_else(treatment_land_holding_pi_long$treat_status  == "yes","Treatment Group","Control Group")
@@ -148,6 +153,7 @@ treatment_land_holding_pi_long$treat_status <- if_else(treatment_land_holding_pi
 land_holding_full <- bind_rows(overall_land_holding_pi_long,treatment_land_holding_pi_long)
 
 land_holding_full$treat_status <- factor(land_holding_full$treat_status, levels = c("Total Population", "Control Group", "Treatment Group"))
+land_holding_full$product <- factor(land_holding_full$product, levels = c("Rice", "Fruit","Vegetable",  "Other"))
 
 
 land_holding_graph <- ggplot(land_holding_full, aes(x = "", y = percentage, fill = product)) +
